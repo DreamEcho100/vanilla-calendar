@@ -105,16 +105,16 @@ const actions = {
       closeModal(modalElements, calendarControllers, calendar);
     });
   },
-  onDayInit(dayKey, dayElem, calendar) {
+  onDayInit(day, calendar) {
     // lol
     // needs to be refactored so that it can accept `events` mor generically
-    const eventForDay = eventsController.get().find((e) => e.date === dayKey);
+    const eventForDay = eventsController.get().find((e) => e.date === day.key);
 
     if (eventForDay) {
       const eventDiv = document.createElement('div');
-      eventDiv.classList.add('de100-calendar-event-day');
+      eventDiv.classList.add('de100-calendar-event-day-item');
       eventDiv.innerText = eventForDay.title;
-      dayElem.appendChild(eventDiv);
+      day.elem.appendChild(eventDiv);
     }
   },
   onCalendarViewBuildStart(calendar) {

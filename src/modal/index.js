@@ -62,7 +62,7 @@ export function saveEvent(calendar, modalElements, calendarControllers) {
       "Selected element doesn't exist",
     );
     const eventDiv = document.createElement('div');
-    eventDiv.classList.add('de100-calendar-event-day');
+    eventDiv.classList.add('de100-calendar-event-day-item');
     eventDiv.innerText = modalElements.eventTitleInput.value;
     dayElem.appendChild(eventDiv);
 
@@ -99,11 +99,11 @@ export function deleteEvent(calendar, modalElements, calendarControllers) {
     "Selected element doesn't exist",
   );
 
-  const eventMarkElem = isElementOrThrow(
-    dayElem.querySelector('.de100-calendar-event-day'),
+  const dayEventItemElem = isElementOrThrow(
+    dayElem.querySelector('.de100-calendar-event-day-item'),
     "Event day element doesn't exist",
   );
-  dayElem.removeChild(eventMarkElem);
+  dayElem.removeChild(dayEventItemElem);
 
   let _events = calendarControllers.events.get();
   const dateKey = calendar.formatDateToKey(dateClicked);

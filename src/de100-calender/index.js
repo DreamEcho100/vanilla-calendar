@@ -5,7 +5,7 @@ import { isElementOrThrow } from '../utils.js';
  * @typedef {{
  *  onDayClick: (dateClicked: Date, calendar: CalendarState) => void;
  *  onInit: (calendar: CalendarState) => void;
- *  onDayInit: (dayKey: string, dayElem: HTMLElement, calendar: CalendarState) => void;
+ *  onDayInit: (day: { key: string, elem: HTMLElement, containerElem: HTMLElement }, calendar: CalendarState) => void;
  *  onCalendarViewBuildStart?: (calendar: CalendarState) => void;
  *  onCalendarViewBuildEnd?: (calendar: CalendarState) => void;
  * }} CalendarActions
@@ -196,27 +196,45 @@ function getDateInfo(dt) {
  * 	day: number,
  * 	isCurrentDay: boolean,
  * 	movedByFromCurrentDate: number,
- * 	dayElem: HTMLElement,
  * 	calendar: CalendarState,
- * 	dayElemDate: Date,
+ * 	dayDate: Date,
  *  actions: CalendarActions
+ *  dayElemContainerClasses: string[]
+ *  dayElemClasses: string[]
  * }} params
  */
 function calendarDayElemBuilder(params) {
-  const dayKey = params.calendar.formatDateToKey(params.dayElemDate);
-  params.dayElem.dataset.key = dayKey;
+  const dayElemContainer = document.createElement('div');
+  dayElemContainer.classList.add(...params.dayElemContainerClasses);
+
+  const dayElem = document.createElement('div');
+  dayElem.classList.add(...params.dayElemClasses);
+
+  dayElem.innerText = params.day.toString();
+
+  const dayKey = params.calendar.formatDateToKey(params.dayDate);
+  dayElem.dataset.key = dayKey;
+
+  dayElemContainer.appendChild(dayElem);
 
   if (params.isCurrentDay) {
-    params.dayElem.classList.add('de100-calendar-current-day');
+    dayElem.classList.add('de100-calendar-current-day');
   }
 
-  params.dayElem.addEventListener('click', () => {
-    params.actions.onDayClick(params.dayElemDate, params.calendar);
+  dayElem.addEventListener('click', () => {
+    params.actions.onDayClick(params.dayDate, params.calendar);
   });
 
-  params.calendar.elements.calendarDaysContainer.appendChild(params.dayElem);
+  params.calendar.elements.calendarDaysContainer.appendChild(dayElemContainer);
 
-  params.actions.onDayInit(dayKey, params.dayElem, params.calendar);
+  params.actions.onDayInit(
+    {
+      containerElem: dayElemContainer,
+      elem: dayElem,
+      key: dayKey,
+    },
+    params.calendar,
+  );
 }
 
 /**
@@ -253,13 +271,8 @@ function buildCurrentCalendarView(calendar, options) {
     1;
   const daysBeforeLoopMax = info.monthMetadata.paddingDaysBefore + 1;
   for (; i < daysBeforeLoopMax; i++) {
-    const dayElem = document.createElement('div');
-    dayElem.classList.add('de100-calendar-day', 'de100-calendar-padding-day');
-
     const day = info.monthMetadata.monthBeforeMetadata.lastDayDate.getDate() - info.monthMetadata.paddingDaysBefore + i;
-    dayElem.innerText = day.toString();
-
-    const dayElemDate = new Date(
+    const dayDate = new Date(
       info.monthMetadata.monthBeforeMetadata.year,
       info.monthMetadata.monthBeforeMetadata.month,
       day,
@@ -274,8 +287,9 @@ function buildCurrentCalendarView(calendar, options) {
       calendar,
       isCurrentDay,
       day,
-      dayElem,
-      dayElemDate,
+      dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-padding-day-container'],
+      dayElemClasses: ['de100-calendar-day', 'de100-calendar-padding-day'],
+      dayDate,
       movedByFromCurrentDate: beforeMovedByFromCurrentDate,
       actions: options.actions,
     });
@@ -287,13 +301,8 @@ function buildCurrentCalendarView(calendar, options) {
   const currentMovedByFromCurrentDate = (info.year - currentYear) * 12 + (info.month - currentMonth);
   const daysLoopMax = info.monthMetadata.paddingDaysBefore + info.monthMetadata.daysSize;
   for (; i <= daysLoopMax; i++) {
-    const dayElem = document.createElement('div');
-    dayElem.classList.add('de100-calendar-day', 'de100-calendar-main-day');
-
     const day = i - info.monthMetadata.paddingDaysBefore;
-    dayElem.innerText = day.toString();
-
-    const dayElemDate = new Date(info.year, info.month, day);
+    const dayDate = new Date(info.year, info.month, day);
     const isCurrentDay = currentDay === day && currentYear === info.year && currentMonth === info.month;
 
     /*******************************/
@@ -301,8 +310,9 @@ function buildCurrentCalendarView(calendar, options) {
       calendar,
       isCurrentDay,
       day,
-      dayElem,
-      dayElemDate,
+      dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-view-day-container'],
+      dayElemClasses: ['de100-calendar-day', 'de100-calendar-view-day'],
+      dayDate,
       movedByFromCurrentDate: currentMovedByFromCurrentDate,
       actions: options.actions,
     });
@@ -317,13 +327,8 @@ function buildCurrentCalendarView(calendar, options) {
     1;
   const daysAfterLoopMax = info.monthMetadata.paddingDaysAfter + 1;
   for (; i < daysAfterLoopMax; i++) {
-    const dayElem = document.createElement('div');
-    dayElem.classList.add('de100-calendar-day', 'de100-calendar-padding-day');
-
     const day = i + 1;
-    dayElem.innerText = day.toString();
-
-    const dayElemDate = new Date(
+    const dayDate = new Date(
       info.monthMetadata.monthAfterMetadata.year,
       info.monthMetadata.monthAfterMetadata.month,
       day,
@@ -338,8 +343,9 @@ function buildCurrentCalendarView(calendar, options) {
       calendar,
       isCurrentDay,
       day,
-      dayElem,
-      dayElemDate,
+      dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-padding-day-container'],
+      dayElemClasses: ['de100-calendar-day', 'de100-calendar-padding-day'],
+      dayDate,
       movedByFromCurrentDate: afterMovedByFromCurrentDate,
       actions: options.actions,
     });
