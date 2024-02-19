@@ -87,20 +87,22 @@ const actions = {
       if (!dateClicked) {
         return;
       }
+
       saveEvent(calendar, modalElements, calendarControllers);
     });
     modalElements.cancelButton.addEventListener('click', () => {
-      closeModal(calendar, modalElements, calendarControllers);
+      closeModal(modalElements, calendarControllers, calendar);
     });
     modalElements.deleteButton.addEventListener('click', () => {
       const dateClicked = calendarControllers.dateClicked.get();
       if (!dateClicked) {
         return;
       }
+
       deleteEvent(calendar, modalElements, calendarControllers);
     });
     modalElements.closeButton.addEventListener('click', () => {
-      closeModal(calendar, modalElements, calendarControllers);
+      closeModal(modalElements, calendarControllers, calendar);
     });
   },
   onDayInit(dayKey, dayElem, calendar) {
@@ -113,6 +115,12 @@ const actions = {
       eventDiv.classList.add('de100-calendar-event-day');
       eventDiv.innerText = eventForDay.title;
       dayElem.appendChild(eventDiv);
+    }
+  },
+  onCalendarViewBuildStart(calendar) {
+    const dateClicked = calendarControllers.dateClicked.get();
+    if (dateClicked) {
+      closeModal(modalElements, calendarControllers, calendar);
     }
   },
 };

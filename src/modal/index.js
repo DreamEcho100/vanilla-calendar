@@ -29,11 +29,11 @@ export function openModal(calendar, modalElements, calendarControllers) {
 }
 
 /**
- * @param {import('../de100-calender/index.js').CalendarState} calendar
  * @param {ModalElements} modalElements
  * @param {import('../main.js').CalendarControllers} calendarControllers
+ * @param {import('../de100-calender/index.js').CalendarState} calendar
  */
-export function closeModal(calendar, modalElements, calendarControllers) {
+export function closeModal(modalElements, calendarControllers, calendar) {
   modalElements.eventTitleInput.classList.remove('error');
   modalElements.newEventModal.style.display = 'none';
   modalElements.deleteEventModal.style.display = 'none';
@@ -76,7 +76,7 @@ export function saveEvent(calendar, modalElements, calendarControllers) {
     });
     calendarControllers.events.set(_events);
 
-    closeModal(calendar, modalElements, calendarControllers);
+    closeModal(modalElements, calendarControllers, calendar);
   } else {
     modalElements.eventTitleInput.classList.add('error');
   }
@@ -109,7 +109,7 @@ export function deleteEvent(calendar, modalElements, calendarControllers) {
   const dateKey = calendar.formatDateToKey(dateClicked);
   calendarControllers.events.set(_events.filter((e) => e.date !== dateKey));
 
-  closeModal(calendar, modalElements, calendarControllers);
+  closeModal(modalElements, calendarControllers, calendar);
 }
 
 /**
