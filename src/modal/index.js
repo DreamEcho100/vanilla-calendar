@@ -131,9 +131,7 @@ export function deleteEvent(params) {
  * }} ModalElements
  */
 
-/**
- * @returns {ModalElements}
- */
+/** @returns {ModalElements} */
 export function getCalendarModalElements() {
   const newEventModal = isElementOrThrow(
     /** @type {HTMLElement} */ (document.body.querySelector('.de100-temp-cm-new-event-modal')),
