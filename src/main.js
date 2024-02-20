@@ -107,6 +107,8 @@ const actions = {
     });
   },
   onDayInit(day, calendar) {
+    day.elem.innerText = day.date.getDate().toString();
+
     // lol
     // needs to be refactored so that it can accept `events` mor generically
     const eventForDay = eventsController.get().find((e) => e.date === day.key);

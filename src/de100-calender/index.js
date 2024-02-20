@@ -5,7 +5,7 @@ import { isElementOrThrow } from '../utils.js';
  * @typedef {{
  *  onDayClick: (dateClicked: Date, calendar: CalendarState) => void;
  *  onInit: (calendar: CalendarState) => void;
- *  onDayInit: (day: { key: string, elem: HTMLElement, containerElem: HTMLElement }, calendar: CalendarState) => void;
+ *  onDayInit: (day: { key: string, elem: HTMLElement, containerElem: HTMLElement; date: Date }, calendar: CalendarState) => void;
  *  onCalendarViewBuildStart?: (calendar: CalendarState) => void;
  *  onCalendarViewBuildEnd?: (calendar: CalendarState) => void;
  * }} CalendarActions
@@ -290,7 +290,7 @@ function getDateInfo(dt) {
  * 	isCurrentDay: boolean,
  * 	movedByFromCurrentDate: number,
  * 	calendar: CalendarState,
- * 	dayDate: Date,
+ * 	date: Date,
  *  actions: CalendarActions
  *  dayElemContainerClasses: string[]
  *  dayElemClasses: string[]
@@ -303,9 +303,9 @@ function calendarDayElemBuilder(params) {
   const dayElem = document.createElement('div');
   dayElem.classList.add(...params.dayElemClasses);
 
-  dayElem.innerText = params.day.toString();
+  // dayElem.innerText = params.day.toString();
 
-  const dayKey = params.calendar.formatDateToKey(params.dayDate);
+  const dayKey = params.calendar.formatDateToKey(params.date);
   dayElem.dataset.key = dayKey;
 
   dayElemContainer.appendChild(dayElem);
@@ -315,17 +315,13 @@ function calendarDayElemBuilder(params) {
   }
 
   dayElem.addEventListener('click', () => {
-    params.actions.onDayClick(params.dayDate, params.calendar);
+    params.actions.onDayClick(params.date, params.calendar);
   });
 
   params.calendar.elements.calendarDaysContainer.appendChild(dayElemContainer);
 
   params.actions.onDayInit(
-    {
-      containerElem: dayElemContainer,
-      elem: dayElem,
-      key: dayKey,
-    },
+    { containerElem: dayElemContainer, elem: dayElem, key: dayKey, date: params.date },
     params.calendar,
   );
 }
@@ -382,7 +378,7 @@ function buildCurrentCalendarView(calendar, options) {
       day,
       dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-padding-day-container'],
       dayElemClasses: ['de100-calendar-day', 'de100-calendar-padding-day'],
-      dayDate,
+      date: dayDate,
       movedByFromCurrentDate: beforeMovedByFromCurrentDate,
       actions: options.actions,
     });
@@ -405,7 +401,7 @@ function buildCurrentCalendarView(calendar, options) {
       day,
       dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-view-day-container'],
       dayElemClasses: ['de100-calendar-day', 'de100-calendar-view-day'],
-      dayDate,
+      date: dayDate,
       movedByFromCurrentDate: currentMovedByFromCurrentDate,
       actions: options.actions,
     });
@@ -438,7 +434,7 @@ function buildCurrentCalendarView(calendar, options) {
       day,
       dayElemContainerClasses: ['de100-calendar-day-container', 'de100-calendar-padding-day-container'],
       dayElemClasses: ['de100-calendar-day', 'de100-calendar-padding-day'],
-      dayDate,
+      date: dayDate,
       movedByFromCurrentDate: afterMovedByFromCurrentDate,
       actions: options.actions,
     });
