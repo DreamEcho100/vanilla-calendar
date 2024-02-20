@@ -13,7 +13,6 @@ import { isElementOrThrow } from '../utils.js';
 
 /**
  * @typedef {{
- *  parentElement: HTMLElement,
  *  calendarDaysContainer: HTMLElement,
  *  monthlyDisplay: HTMLElement,
  *  monthMovementBackButton: HTMLButtonElement,
@@ -56,6 +55,29 @@ import { isElementOrThrow } from '../utils.js';
  * 	};
  *  paddingDaysAfter: number;
  * }} MonthMetadata
+ *
+ * @typedef {{
+ *  startOfWeek: Date;
+ *  endOfWeek: Date;
+ *  days: {
+ *   weekday: string;
+ * 	 day: number;
+ *   month: number;
+ *   year: number;
+ *   date: Date;
+ *  }[]
+ * }} WeekMetadata
+ *
+ * @typedef {{
+ *  firstDay: Date;
+ *  firstWeekday: string;
+ *  firstWeekdayIndex: number;
+ *  lastDay: Date;
+ *  lastWeekday: string;
+ *  lastWeekdayIndex: number;
+ *  daysSize: number;
+ *  isLeapYear: boolean;
+ * }} YearMetadata
  */
 
 /**
@@ -65,8 +87,10 @@ import { isElementOrThrow } from '../utils.js';
  * 	month: number;
  * 	year: number;
  * 	currentWeekday: string;
- * 	CurrentWeekdayIndex: number;
+ * 	currentWeekdayIndex: number;
  * 	get monthMetadata(): MonthMetadata
+ *  get weekMetadata(): WeekMetadata
+ *  get yearMetadata(): YearMetadata
  * }} DateInfo
  */
 
@@ -101,7 +125,6 @@ function getCalendarElements(baseElement) {
   );
 
   return {
-    parentElement: baseElement,
     calendarDaysContainer,
     monthlyDisplay,
     monthMovementBackButton,
@@ -126,10 +149,19 @@ function getDateInfo(dt) {
   const currentWeekday = new Intl.DateTimeFormat('en-us', {
     weekday: 'long',
   }).format(dt);
-  const CurrentWeekdayIndex = dt.getDay();
+  const currentWeekdayIndex = dt.getDay();
+
+  // remember to get days in month, we go to the next month and then go back a day by using 0 as the day
+  const daysInMonthSize = new Date(year, month + 1, 0).getDate();
+
+  /** @type {YearMetadata | null} */
+  let yearMetadataMemo = null;
 
   /** @type {MonthMetadata | null} */
   let monthMetadataMemo = null;
+
+  /** @type {WeekMetadata | null} */
+  let weekMetadataMemo = null;
 
   return {
     dt,
@@ -137,7 +169,35 @@ function getDateInfo(dt) {
     month,
     year,
     currentWeekday,
-    CurrentWeekdayIndex,
+    currentWeekdayIndex,
+    get yearMetadata() {
+      if (yearMetadataMemo) {
+        return yearMetadataMemo;
+      }
+
+      const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0); // new Date(year,1,29).getMonth() === 1
+
+      const firstDay = new Date(year, 0, 1);
+      const firstWeekdayIndex = firstDay.getDay();
+      const firstWeekday = weekdays[firstWeekdayIndex];
+
+      const lastDay = new Date(year + 1, 0, 0); // new Date(year, 11, 31);
+      const lastWeekdayIndex = lastDay.getDay();
+      const lastWeekday = weekdays[lastWeekdayIndex];
+
+      yearMetadataMemo = {
+        firstDay,
+        firstWeekday,
+        firstWeekdayIndex,
+        lastDay,
+        lastWeekday,
+        lastWeekdayIndex,
+        daysSize: isLeapYear ? 366 : 365,
+        isLeapYear,
+      };
+
+      return yearMetadataMemo;
+    },
     get monthMetadata() {
       if (monthMetadataMemo) {
         return monthMetadataMemo;
@@ -146,8 +206,7 @@ function getDateInfo(dt) {
       const firstDay = new Date(year, month, 1);
       const firstWeekdayIndex = firstDay.getDay();
       const firstWeekday = weekdays[firstWeekdayIndex];
-      // remember to get days in month, we go to the next month and then go back a day by using 0 as the day
-      const daysSize = new Date(year, month + 1, 0).getDate();
+      // const daysSize = new Date(year, month + 1, 0).getDate();
 
       const monthBeforeLastDayDate = new Date(year, month, 0);
       const monthBeforeLastWeekdayIndex = monthBeforeLastDayDate.getDay();
@@ -179,7 +238,7 @@ function getDateInfo(dt) {
         firstDay,
         firstWeekday,
         firstWeekdayIndex,
-        daysSize,
+        daysSize: daysInMonthSize,
         monthBeforeMetadata,
         paddingDaysBefore,
         monthAfterMetadata,
@@ -187,6 +246,40 @@ function getDateInfo(dt) {
       };
 
       return monthMetadataMemo;
+    },
+    get weekMetadata() {
+      if (weekMetadataMemo) {
+        return weekMetadataMemo;
+      }
+
+      const startOfWeek = new Date(year, month, day - currentWeekdayIndex);
+      const endOfWeek = new Date(year, month, day + (6 - currentWeekdayIndex));
+
+      const startOfWeekDay = startOfWeek.getDate();
+
+      /** @type {WeekMetadata['days']} */
+      const days = Array.from({ length: 7 });
+
+      let i = 0;
+      for (; i < days.length; i++) {
+        const date = new Date(year, month, startOfWeekDay + i);
+
+        days[i] = {
+          weekday: weekdays[i],
+          day: date.getDate(),
+          month: date.getMonth(),
+          year: date.getFullYear(),
+          date,
+        };
+      }
+
+      weekMetadataMemo = {
+        startOfWeek,
+        endOfWeek,
+        days,
+      };
+
+      return weekMetadataMemo;
     },
   };
 }
@@ -360,20 +453,13 @@ function buildCurrentCalendarView(calendar, options) {
 /** @type {CalendarState['formatDateToKey']} */
 const defaultFormatDateToKey = (date) => date.toISOString();
 
-/**
- * @param {{
- *  baseElement: HTMLElement | null | undefined
- *  formatDateToKey?: (date: Date) => string
- *  initialViewDate?: Date
- *  actions: CalendarActions
- * }} params
- */
-export function setupCalendar(params) {
-  if (!params.baseElement) {
+/** @param {HTMLElement | null | undefined} baseElement  */
+export function injectCalendar(baseElement) {
+  if (!baseElement) {
     throw new Error('Base element is not found');
   }
 
-  params.baseElement.innerHTML = `<div class="de100-calendar-container">
+  baseElement.innerHTML = `<div class="de100-calendar-container">
 	<div class="de100-calendar-header">
 		<div class="de100-calendar-month-display"></div>
 		<div>
@@ -408,6 +494,20 @@ export function setupCalendar(params) {
 	<div class="de100-calendar-days-container"></div>
 </div>
 `;
+}
+
+/**
+ * @param {{
+ *  baseElement: HTMLElement | null | undefined
+ *  formatDateToKey?: (date: Date) => string
+ *  initialViewDate?: Date
+ *  actions: CalendarActions
+ * }} params
+ */
+export function initCalendar(params) {
+  if (!params.baseElement) {
+    throw new Error('Base element is not found');
+  }
 
   const currentDate = new Date();
 

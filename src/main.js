@@ -8,7 +8,7 @@ import {
   injectCalendarModal,
 } from './modal/index.js';
 import { isElementOrThrow } from './utils.js';
-import { setupCalendar } from './de100-calender/index.js';
+import { injectCalendar, initCalendar } from './de100-calender/index.js';
 
 /**
  * @typedef {{
@@ -35,12 +35,13 @@ import { setupCalendar } from './de100-calender/index.js';
  * }} CalendarControllers
  */
 
-injectCalendarModal();
-
 const baseElement = isElementOrThrow(
   /** @type {HTMLDivElement} */ (document.querySelector('#app')),
   "App element doesn't exist",
 );
+
+injectCalendarModal();
+injectCalendar(baseElement);
 
 const modalElements = getCalendarModalElements();
 
@@ -88,7 +89,7 @@ const actions = {
         return;
       }
 
-      saveEvent(calendar, modalElements, calendarControllers);
+      saveEvent({ calendar, containerElement: baseElement, modalElements, calendarControllers });
     });
     modalElements.cancelButton.addEventListener('click', () => {
       closeModal(modalElements, calendarControllers, calendar);
@@ -99,7 +100,7 @@ const actions = {
         return;
       }
 
-      deleteEvent(calendar, modalElements, calendarControllers);
+      deleteEvent({ calendar, containerElement: baseElement, modalElements, calendarControllers });
     });
     modalElements.closeButton.addEventListener('click', () => {
       closeModal(modalElements, calendarControllers, calendar);
@@ -125,4 +126,4 @@ const actions = {
   },
 };
 
-setupCalendar({ baseElement, actions });
+initCalendar({ baseElement, actions });

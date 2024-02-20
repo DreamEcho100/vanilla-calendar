@@ -43,59 +43,64 @@ export function closeModal(modalElements, calendarControllers, calendar) {
   // buildCurrentCalendarView(calendar, { events });
 }
 /**
- * @param {import('../de100-calender/index.js').CalendarState} calendar
- * @param {ModalElements} modalElements
- * @param {import('../main.js').CalendarControllers} calendarControllers
+ * @param {{
+ *  calendar: import('../de100-calender/index.js').CalendarState;
+ *  modalElements: ModalElements;
+ *  containerElement: HTMLElement;
+ *  calendarControllers: import('../main.js').CalendarControllers;
+ * }} params
  */
-export function saveEvent(calendar, modalElements, calendarControllers) {
-  if (modalElements.eventTitleInput.value) {
-    modalElements.eventTitleInput.classList.remove('error');
+export function saveEvent(params) {
+  if (params.modalElements.eventTitleInput.value) {
+    params.modalElements.eventTitleInput.classList.remove('error');
 
-    const dateClicked = calendarControllers.dateClicked.get();
+    const dateClicked = params.calendarControllers.dateClicked.get();
     if (!dateClicked) {
       throw new Error('Date clicked is not set');
     }
 
     const dayElem = isElementOrThrow(
       /** @type {HTMLElement} */
-      (calendar.elements.parentElement.querySelector(`[data-key="${calendar.formatDateToKey(dateClicked)}"]`)),
+      (params.containerElement.querySelector(`[data-key="${params.calendar.formatDateToKey(dateClicked)}"]`)),
       "Selected element doesn't exist",
     );
     const eventDiv = document.createElement('div');
     eventDiv.classList.add('de100-calendar-event-day-item');
-    eventDiv.innerText = modalElements.eventTitleInput.value;
+    eventDiv.innerText = params.modalElements.eventTitleInput.value;
     dayElem.appendChild(eventDiv);
 
-    const _events = calendarControllers.events.get();
+    const _events = params.calendarControllers.events.get();
     // lol
     // It's mutable since it's a reference but it's not a big deal since I set right after so that it's saved to local storage
     _events.push({
       id: crypto.randomUUID(),
-      date: calendar.formatDateToKey(dateClicked),
-      title: modalElements.eventTitleInput.value,
+      date: params.calendar.formatDateToKey(dateClicked),
+      title: params.modalElements.eventTitleInput.value,
     });
-    calendarControllers.events.set(_events);
+    params.calendarControllers.events.set(_events);
 
-    closeModal(modalElements, calendarControllers, calendar);
+    closeModal(params.modalElements, params.calendarControllers, params.calendar);
   } else {
-    modalElements.eventTitleInput.classList.add('error');
+    params.modalElements.eventTitleInput.classList.add('error');
   }
 }
 
 /**
- * @param {import('../de100-calender/index.js').CalendarState} calendar
- * @param {ModalElements} modalElements
- * @param {import('../main.js').CalendarControllers} calendarControllers
+ * @param {{
+ *  calendar: import('../de100-calender/index.js').CalendarState;
+ *  modalElements: ModalElements;
+ *  containerElement: HTMLElement;
+ *  calendarControllers: import('../main.js').CalendarControllers;
+ * }} params
  */
-export function deleteEvent(calendar, modalElements, calendarControllers) {
-  const dateClicked = calendarControllers.dateClicked.get();
+export function deleteEvent(params) {
+  const dateClicked = params.calendarControllers.dateClicked.get();
   if (!dateClicked) {
     throw new Error('Date clicked is not set');
   }
 
   const dayElem = isElementOrThrow(
-    /** @type {HTMLElement} */
-    (calendar.elements.parentElement.querySelector(`[data-key="${calendar.formatDateToKey(dateClicked)}"]`)),
+    params.containerElement.querySelector(`[data-key="${params.calendar.formatDateToKey(dateClicked)}"]`),
     "Selected element doesn't exist",
   );
 
@@ -105,11 +110,11 @@ export function deleteEvent(calendar, modalElements, calendarControllers) {
   );
   dayElem.removeChild(dayEventItemElem);
 
-  let _events = calendarControllers.events.get();
-  const dateKey = calendar.formatDateToKey(dateClicked);
-  calendarControllers.events.set(_events.filter((e) => e.date !== dateKey));
+  let _events = params.calendarControllers.events.get();
+  const dateKey = params.calendar.formatDateToKey(dateClicked);
+  params.calendarControllers.events.set(_events.filter((e) => e.date !== dateKey));
 
-  closeModal(modalElements, calendarControllers, calendar);
+  closeModal(params.modalElements, params.calendarControllers, params.calendar);
 }
 
 /**
